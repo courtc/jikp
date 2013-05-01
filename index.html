@@ -124,8 +124,11 @@
 				scale = window.innerHeight / 200;		
 			}
 			
-			canvas.width = SCREEN_WIDTH;
-			canvas.height = SCREEN_HEIGHT;
+			canvas.width = 320 * scale;
+			canvas.height = 200 * scale;
+			canvas.style.position = "fixed";
+			canvas.style.left = (SCREEN_WIDTH - canvas.width) / 2 + "px";
+			canvas.style.top  = (SCREEN_HEIGHT - canvas.height) / 2 + "px";
 			
 			for (i = 0; i< players.length; i++){
 				players[i].updatePlayer();

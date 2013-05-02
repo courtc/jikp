@@ -129,6 +129,19 @@
         var RIGHT = 0x00100;
         var DOWN = 0x01000;
         var BUTTONA = 0x10000;
+        var UPRIGHT = (UP | RIGHT);
+        var UPLEFT = (UP | LEFT);
+        var DOWNRIGHT = (DOWN | RIGHT);
+        var DOWNLEFT = (DOWN | LEFT);
+        var LEFTA = (LEFT | BUTTONA);
+        var RIGHTA = (RIGHT | BUTTONA);
+        var UPA = (UP | BUTTONA);
+        var DOWNA = (DOWN | BUTTONA);
+        var UPRIGHTA = (UP | RIGHT | BUTTONA);
+        var UPLEFTA = (UP | LEFT | BUTTONA);
+        var DOWNRIGHTA = (DOWN | RIGHT | BUTTONA);
+        var DOWNLEFTA = (DOWN | LEFT | BUTTONA);
+        
         var canvas = document.createElement('canvas');
   		var c = canvas.getContext('2d');
         
@@ -295,20 +308,20 @@
                 case RIGHT: players[iplayer].x += 1;return anim_walk;
                 case UP: return anim_jump;
                 case DOWN: return anim_sweep;
-                case (UP & RIGHT): return anim_punch;
-                case (UP & LEFT): return anim_idle;
-                case (DOWN & RIGHT): return anim_idle;
-                case (DOWN & LEFT): return anim_idle;
+                case UPRIGHT: return anim_punch;
+                case UPLEFT: return anim_idle;
+                case DOWNRIGHT: return anim_idle;
+                case DOWNLEFT: return anim_idle;
                 
                 case BUTTONA: return anim_idle;
-                case (LEFT & BUTTONA): return anim_idle;
-                case (RIGHT & BUTTONA): return anim_idle;
-                case (UP & BUTTONA): return anim_idle;
-                case (DOWN & BUTTONA): return anim_idle;
-                case (UP & RIGHT & BUTTONA): return anim_idle;
-                case (UP & LEFT & BUTTONA): return anim_idle;
-                case (DOWN & RIGHT & BUTTONA): return anim_idle;
-                case (DOWN & LEFT & BUTTONA): return anim_idle;
+                case LEFTA: return anim_idle;
+                case RIGHTA: return anim_idle;
+                case UPA: return anim_idle;
+                case DOWNA: return anim_idle;
+                case UPRIGHTA: return anim_idle;
+                case UPLEFTA: return anim_idle;
+                case DOWNRIGHTA: return anim_idle;
+                case DOWNLEFTA: return anim_idle;
                 default: return anim_idle;
             }
         }

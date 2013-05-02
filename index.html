@@ -241,21 +241,21 @@
             event.preventDefault();
             switch( event.keyCode)
             {
-                case KEYCODE_LEFT: joystick[0]  |= LEFT; break;
-                case KEYCODE_UP: joystick[0]    |= UP; break;
-                case KEYCODE_RIGHT: joystick[0] |= RIGHT; break;
-                case KEYCODE_DOWN: joystick[0]  |= DOWN; break;
-                case KEYCODE_SHIFT: joystick[0] |= BUTTONA; break;
-                case KEYCODE_A: joystick[1]     |= LEFT; break;
-                case KEYCODE_W: joystick[1]     |= UP; break;
-                case KEYCODE_D: joystick[1]     |= RIGHT; break;
-                case KEYCODE_S: joystick[1]     |= DOWN; break;
-                case KEYCODE_CTRL: joystick[1]  |= BUTTONA; break;
-                case KEYCODE_G: joystick[2]     |= LEFT; break;
-                case KEYCODE_Y: joystick[2]     |= UP; break;
-                case KEYCODE_J: joystick[2]     |= RIGHT; break;
-                case KEYCODE_H: joystick[2]     |= DOWN; break;
-                case KEYCODE_SPACE: joystick[2] |= BUTTONA; break;
+                case KEYCODE_LEFT:  joystick[0]     |= LEFT;    break;
+                case KEYCODE_UP:    joystick[0]     |= UP;      break;
+                case KEYCODE_RIGHT: joystick[0]     |= RIGHT;   break;
+                case KEYCODE_DOWN:  joystick[0]     |= DOWN;    break;
+                case KEYCODE_SHIFT: joystick[0]     |= BUTTONA; break;
+                case KEYCODE_A:     joystick[1]     |= LEFT;    break;
+                case KEYCODE_W:     joystick[1]     |= UP;      break;
+                case KEYCODE_D:     joystick[1]     |= RIGHT;   break;
+                case KEYCODE_S:     joystick[1]     |= DOWN;    break;
+                case KEYCODE_CTRL:  joystick[1]     |= BUTTONA; break;
+                case KEYCODE_G:     joystick[2]     |= LEFT;    break;
+                case KEYCODE_Y:     joystick[2]     |= UP;      break;
+                case KEYCODE_J:     joystick[2]     |= RIGHT;   break;
+                case KEYCODE_H:     joystick[2]     |= DOWN;    break;
+                case KEYCODE_SPACE: joystick[2]     |= BUTTONA; break;
             }
         }
         
@@ -268,21 +268,21 @@
             event.preventDefault();
             switch( event.keyCode)
             {
-                case KEYCODE_LEFT: joystick[0]  &= ~LEFT; break;
-                case KEYCODE_UP: joystick[0]    &= ~UP; break;
-                case KEYCODE_RIGHT: joystick[0] &= ~RIGHT; break;
-                case KEYCODE_DOWN: joystick[0]  &= ~DOWN; break;
-                case KEYCODE_SHIFT: joystick[0] &= ~BUTTONA; break;
-                case KEYCODE_A: joystick[1]     &= ~LEFT; break;
-                case KEYCODE_W: joystick[1]     &= ~UP; break;
-                case KEYCODE_D: joystick[1]     &= ~RIGHT; break;
-                case KEYCODE_S: joystick[1]     &= ~DOWN; break;
-                case KEYCODE_CTRL: joystick[1]  &= ~BUTTONA; break;
-                case KEYCODE_G: joystick[2]     &= ~LEFT; break;
-                case KEYCODE_Y: joystick[2]     &= ~UP; break;
-                case KEYCODE_J: joystick[2]     &= ~RIGHT; break;
-                case KEYCODE_H: joystick[2]     &= ~DOWN; break;
-                case KEYCODE_SPACE: joystick[2] &= ~BUTTONA; break;
+                case KEYCODE_LEFT:  joystick[0]     &= ~LEFT;   break;
+                case KEYCODE_UP:    joystick[0]     &= ~UP;     break;
+                case KEYCODE_RIGHT: joystick[0]     &= ~RIGHT;  break;
+                case KEYCODE_DOWN:  joystick[0]     &= ~DOWN;   break;
+                case KEYCODE_SHIFT: joystick[0]     &= ~BUTTONA;break;
+                case KEYCODE_A:     joystick[1]     &= ~LEFT;   break;
+                case KEYCODE_W:     joystick[1]     &= ~UP;     break;
+                case KEYCODE_D:     joystick[1]     &= ~RIGHT;  break;
+                case KEYCODE_S:     joystick[1]     &= ~DOWN;   break;
+                case KEYCODE_CTRL:  joystick[1]     &= ~BUTTONA;break;
+                case KEYCODE_G:     joystick[2]     &= ~LEFT;   break;
+                case KEYCODE_Y:     joystick[2]     &= ~UP;     break;
+                case KEYCODE_J:     joystick[2]     &= ~RIGHT;  break;
+                case KEYCODE_H:     joystick[2]     &= ~DOWN;   break;
+                case KEYCODE_SPACE: joystick[2]     &= ~BUTTONA;break;
             }
             //do stuff
             
@@ -303,24 +303,24 @@
 	   	function input( iplayer) {
             switch( joystick[iplayer] )
             {
-                case 0: return anim_idle;
-                case LEFT: players[iplayer].x -= 1;return anim_walk;
-                case RIGHT: players[iplayer].x += 1;return anim_walk;
-                case UP: return anim_jump;
-                case DOWN: return anim_sweep;
-                case UPRIGHT: return anim_punch;
-                case UPLEFT: return anim_idle;
+                case 0:         return anim_idle;
+                case LEFT:      players[iplayer].x -= 1;return anim_walk;
+                case RIGHT:     players[iplayer].x += 1;return anim_walk;
+                case UP:        return anim_jump;
+                case DOWN:      return anim_sweep;
+                case UPRIGHT:   return anim_punch;
+                case UPLEFT:    return anim_idle;
                 case DOWNRIGHT: return anim_idle;
-                case DOWNLEFT: return anim_idle;
+                case DOWNLEFT:  return anim_idle;
                 
-                case BUTTONA: return anim_idle;
-                case LEFTA: return anim_idle;
-                case RIGHTA: return anim_idle;
-                case UPA: return anim_idle;
-                case DOWNA: return anim_idle;
-                case UPRIGHTA: return anim_idle;
-                case UPLEFTA: return anim_idle;
-                case DOWNRIGHTA: return anim_idle;
+                case BUTTONA:   return anim_idle;
+                case LEFTA:     return anim_idle;
+                case RIGHTA:    return anim_idle;
+                case UPA:       return anim_idle;
+                case DOWNA:     return anim_idle;
+                case UPRIGHTA:  return anim_idle;
+                case UPLEFTA:   return anim_idle;
+                case DOWNRIGHTA:return anim_idle;
                 case DOWNLEFTA: return anim_idle;
                 default: return anim_idle;
             }
@@ -362,6 +362,7 @@
                     gameState = 2;
                     for (i = 0; i< players.length; i++){
                         players[i].anim = anim_idle;
+                        players[i].nextAnim = anim_idle;
                         players[i].counter = 0;
                         players[i].step();
                         players[i].counter = 0;

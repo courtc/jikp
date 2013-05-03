@@ -17,6 +17,14 @@
 				overflow: hidden;
 				font: normal 24pt/32px "C64 Pro Mono", verdana, helvetica, sans-serif;
 			}
+			canvas {
+			    image-rendering: optimizeSpeed;             // Old FF
+			    image-rendering: -moz-crisp-edges;          // FF 6.0+
+			    image-rendering: -webkit-optimize-contrast; // Safari
+			    image-rendering: -o-crisp-edges;            // Opera (12.02+)
+			    image-rendering: optimize-contrast;         // Future browsers
+			    -ms-interpolation-mode: nearest-neighbor;   // IE
+			}
 		</style>
 		
 	</head>
@@ -170,6 +178,11 @@
 			}
             //var ctx=c.getContext("2d")
             c = canvas.getContext('2d');
+
+			if (typeof c.imageSmoothingEnabled !== 'undefined')
+				c.imageSmoothingEnabled = false;
+			else if (typeof c.webkitImageSmoothingEnabled !== 'undefined')
+				c.webkitImageSmoothingEnabled = false;
             c.scale(scale,scale);
 		}
  		

@@ -32,6 +32,18 @@
 	
 	
 	<script>
+		String.prototype.leftpad = function(len, ch) {
+			var str = this;
+			if (arguments.length == 1) ch = " ";
+			while (str.length < len) str = ch + str;
+			return str;
+		}
+		String.prototype.rightpad = function(len, ch) {
+			var str = this;
+			if (arguments.length == 1) ch = " ";
+			while (str.length < len) str = str + ch;
+			return str;
+		}
         var anim_walk = [35,36,37,38,39,40];
         var anim_idle = [0];
         var anim_headbutt = [1,2,1];
@@ -386,9 +398,31 @@
                     }
                     c.clearRect(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
                 }
-					c.fillStyle = "#fff";
 					c.font = "" + 6 + "pt C64 Pro Mono";
-					c.fillText("Hello World", (0),(7)+(25));
+					// "LV"
+					c.fillStyle = "#f0f";
+					c.fillText("LV",                224, 8*1);
+					// Mode
+					c.fillStyle = "#f0f";
+					c.fillText("DEMO",              256, 8*1);
+					// Timer
+					c.fillStyle = "#aaf";
+					c.fillText("21".leftpad(2),     304, 8*1);
+					// White Score
+					c.fillStyle = "#fff";
+					c.fillText("0".leftpad(6),        0, 8*2);
+					// Red Score
+					c.fillStyle = "#faa";
+					c.fillText("1600".leftpad(6),    80, 8*2);
+					// Blue Score
+					c.fillStyle = "#aaf";
+					c.fillText("400".leftpad(6),    160, 8*2);
+					// Level
+					c.fillStyle = "#f0f";
+					c.fillText("1".leftpad(2, "0"), 224, 8*2);
+					// Color
+					c.fillStyle = "#fff";
+					c.fillText("WHITE".leftpad(5),  256, 8*2);
 					break;
 					
                 case 2: // GAME ON!

@@ -33,9 +33,9 @@
         var anim_jump = [13,14,14,14,13];
         var anim_jumpkick = [13,14,15,15,13];
         var anim_punch = [19,20];
-        var anim_kick = [0];
+        var anim_kick = [28,29,30,31];
         var anim_low_kick = [0];
-        var anim_sweep = [0];
+        var anim_sweep = [16, 17, 18];
         var anim_block = [0];
         var anim_splitkick = [0];
         var anim_sit_punch = [0];
@@ -314,13 +314,13 @@
                 case DOWNLEFT:  return anim_idle;
                 
                 case BUTTONA:   return anim_idle;
-                case LEFTA:     return anim_idle;
-                case RIGHTA:    return anim_idle;
-                case UPA:       return anim_idle;
+                case LEFTA:     return anim_cartwheel;
+                case RIGHTA:    return anim_kick;
+                case UPA:       return anim_jumpkick;
                 case DOWNA:     return anim_idle;
-                case UPRIGHTA:  return anim_idle;
-                case UPLEFTA:   return anim_idle;
-                case DOWNRIGHTA:return anim_idle;
+                case UPRIGHTA:  return anim_headbutt;
+                case UPLEFTA:   return anim_splitkick;
+                case DOWNRIGHTA:return anim_kick_high;
                 case DOWNLEFTA: return anim_idle;
                 default: return anim_idle;
             }

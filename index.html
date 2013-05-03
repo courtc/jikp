@@ -37,11 +37,15 @@
         var anim_low_kick = [0];
         var anim_sweep = [16, 17, 18];
         var anim_block = [0];
-        var anim_splitkick = [0];
+        var anim_splitkick = [32,33,34,33,32];
         var anim_sit_punch = [0];
         var anim_k = [0];
         var anim_ki = [0];
         var anim_demo = [0,0,0,0,21,22,23,24,25,26,35,35,1,2,1,35,4,5,6,35,35,0,0,0,0];
+
+        var anim_sweep_back = anim_sweep;
+        var anim_punch_back = anim_punch;
+        var anim_kick_high_back = anim_kick_high;
 
 	var KEYCODE_SHIFT = 16;
 	var KEYCODE_SPACE = 32;
@@ -309,19 +313,19 @@
                 case UP:        return anim_jump;
                 case DOWN:      return anim_sweep;
                 case UPRIGHT:   return anim_punch;
-                case UPLEFT:    return anim_idle;
-                case DOWNRIGHT: return anim_idle;
-                case DOWNLEFT:  return anim_idle;
+                case UPLEFT:    return anim_punch_back;      //backward
+                case DOWNRIGHT: return anim_low_kick;
+                case DOWNLEFT:  return anim_sit_punch;
                 
                 case BUTTONA:   return anim_idle;
                 case LEFTA:     return anim_cartwheel;
                 case RIGHTA:    return anim_kick;
                 case UPA:       return anim_jumpkick;
-                case DOWNA:     return anim_idle;
+                case DOWNA:     return anim_sweep_back;      //backward
                 case UPRIGHTA:  return anim_headbutt;
                 case UPLEFTA:   return anim_splitkick;
                 case DOWNRIGHTA:return anim_kick_high;
-                case DOWNLEFTA: return anim_idle;
+                case DOWNLEFTA: return anim_kick_high_back;  //backward
                 default: return anim_idle;
             }
         }
@@ -353,7 +357,7 @@
                 
                 for (i = 0; i< players.length; i++){
                     players[i].step();
-                    
+
                     c.drawImage(images[players[i].spriteSheet], players[i].frameX , players[i].frameY , players[i].spriteWidth, players[i].spriteHeight, players[i].x , players[i].y , players[i].spriteWidth, players[i].spriteHeight);
                     players[i].nextAnim = anim_demo;
                 }
@@ -382,7 +386,7 @@
                 for (i = 0; i< players.length; i++){
                     players[i].nextAnim = input( i );
                     players[i].step();
-                    
+
                     c.drawImage(images[players[i].spriteSheet], players[i].frameX , players[i].frameY , players[i].spriteWidth, players[i].spriteHeight, players[i].x , players[i].y , players[i].spriteWidth, players[i].spriteHeight);
                 }
 

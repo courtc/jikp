@@ -466,11 +466,12 @@
                 for (i = 0; i< players.length; i++){
                     line = players[i].anim.length / 3;
                     range = ((players[i].anim[players[i].currentframe + line + line])/100) * players[i].spriteWidth ; 
-                    if(range >= 0)
+                    if(range > 0)
                     {
                         for (j = 0; j< players.length; j++)
                         {
-                            if( Math.abs(players[i].x - players[j].x) <= range && i!=j && players[j].anim != anim_fall && players[j].anim != anim_knocked_out){
+                            dist = Math.abs(players[i].x - players[j].x); 
+                            if( dist > 0 && dist <= range && i!=j && players[j].anim != anim_fall && players[j].anim != anim_knocked_out){
                                 players[j].nextAnim = anim_fall;
                                 players[j].counter = 100;
                             }

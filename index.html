@@ -104,6 +104,7 @@
             this.health = 6;
             this.spriteSheet = img;
             this.direction = 1;
+			this.score = 0;
             this.speed = 1;
             this.frameX = 0;
             this.frameY = 0;
@@ -381,6 +382,49 @@
             }
         }
 
+		function drawHealth(ctx, health, x, y, color)
+		{
+			for (i = 0; i < 6; i++) {
+				ctx.fillStyle = (i >= (6 - health)) ? color : "#777";
+				off = x + 8*i;
+				ctx.fillRect(off + 0, y + 1, 7, 4);
+				ctx.fillRect(off + 1, y + 0, 5, 1);
+				ctx.fillRect(off + 1, y + 5, 5, 1);
+			}
+		}
+
+		function drawStatus(c)
+		{
+			c.clearRect(0,0,SCREEN_WIDTH,20);
+			c.font = "" + 6 + "pt C64 Pro Mono";
+			// "LV"
+			c.fillStyle = "#f0f";
+			c.fillText("LV",                                   224, 8*1);
+			// Mode
+			c.fillStyle = "#f0f";
+			c.fillText("DEMO",                                 256, 8*1);
+			// Timer
+			c.fillStyle = "#aaf";
+			c.fillText("21".leftpad(2),                        304, 8*1);
+			// White Score
+			drawHealth(c, players[2].health,                    0, 2, "#fff");
+			c.fillStyle = "#fff";
+			c.fillText(players[2].score.toString().leftpad(6),   0, 8*2);
+			// Red Score
+			drawHealth(c, players[1].health,                    80, 2, "#faa");
+			c.fillStyle = "#faa";
+			c.fillText(players[1].score.toString().leftpad(6),  80, 8*2);
+			// Blue Score
+			drawHealth(c, players[0].health,                   160, 2, "#aaf");
+			c.fillStyle = "#aaf";
+			c.fillText(players[0].score.toString().leftpad(6), 160, 8*2);
+			// Level
+			c.fillStyle = "#f0f";
+			c.fillText("1".leftpad(2, "0"),                    224, 8*2);
+			// Color
+			c.fillStyle = "#fff";
+			c.fillText("WHITE".leftpad(5),                     256, 8*2);
+		}
     
 		function loop() {
             frameTime ++;
@@ -424,31 +468,9 @@
                     }
                     c.clearRect(0,0,SCREEN_WIDTH,SCREEN_HEIGHT);
                 }
-					c.font = "" + 6 + "pt C64 Pro Mono";
-					// "LV"
-					c.fillStyle = "#f0f";
-					c.fillText("LV",                224, 8*1);
-					// Mode
-					c.fillStyle = "#f0f";
-					c.fillText("DEMO",              256, 8*1);
-					// Timer
-					c.fillStyle = "#aaf";
-					c.fillText("21".leftpad(2),     304, 8*1);
-					// White Score
-					c.fillStyle = "#fff";
-					c.fillText("0".leftpad(6),        0, 8*2);
-					// Red Score
-					c.fillStyle = "#faa";
-					c.fillText("1600".leftpad(6),    80, 8*2);
-					// Blue Score
-					c.fillStyle = "#aaf";
-					c.fillText("400".leftpad(6),    160, 8*2);
-					// Level
-					c.fillStyle = "#f0f";
-					c.fillText("1".leftpad(2, "0"), 224, 8*2);
-					// Color
-					c.fillStyle = "#fff";
-					c.fillText("WHITE".leftpad(5),  256, 8*2);
+
+					drawStatus(c);
+
 					break;
 					
                 case 2: // GAME ON!
@@ -473,11 +495,14 @@
                             dist = Math.abs(players[i].x - players[j].x); 
                             if( dist > 0 && dist <= range && i!=j && players[j].anim != anim_fall && players[j].anim != anim_knocked_out){
                                 players[j].nextAnim = anim_fall;
+                                players[j].health = Math.max(players[j].health-1,0);
                                 players[j].counter = 100;
+								players[i].score += 200;
                             }
                         }
                     }
                 }
+					drawStatus(c);
                     break;
 					
                 default:

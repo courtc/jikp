@@ -45,36 +45,33 @@
 			return str;
 		}
         //ANIMATION / MIN RANGE / MAX RANGE DATA ARRAYS IN SEQUENCE, IF A FRAME HAS A RANGE WE ASSUME IT CAN HIT
-        var anim_walk = [35,36,37,38,39,40  //ANIMATION FRAMES
-                        ,0 ,0 ,0 ,0 ,0 ,0   // MIN RANGE
-                        ,0 ,0 ,0 ,0 ,0 ,0]; // MAX RANGE
+        var anim_walk = new animation( 1, [35,36,37,38,39,40],  //ANIMATION FRAMES
+										[0 ,0 ,0 ,0 ,0 ,0],   // MIN RANGE
+										[0 ,0 ,0 ,0 ,0 ,0]); // MAX RANGE
 
-        var anim_idle = [0,0,0];
-        var anim_headbutt = [1,2,1
-                            ,0,0,0
-                            ,0,100,0];
-        var anim_kick_high = [4,5,6,0,0,0,0,0,100];
-        var anim_fall = [7,8,9
-                        ,0,0,0
-                        ,0,0,0];
-        var anim_rise = [10,11,12,0,0,0,0,0,0];
-        var anim_cartwheel = [21,22,23,24,25,26,0,0,0,0,0,0,0,0,0,0,0,0];
-        var anim_jump = [13,14,14,14,13,0,0,0,0,0,0,0,0,0,0];
-        var anim_jumpkick = [13,14,15,15,13,0,0,0,0,0,0,0,100,100,0];
-        var anim_punch = [19,20,0,0,0,100];
-        var anim_kick = [28,29,30,31,0,0,0,0,0,0,0,0];
-        var anim_low_kick = [0,0,0];
-        var anim_sweep = [16, 17, 18,0,0,0,0,0,0];
-        var anim_block = [0,0,0];
-        var anim_splitkick = [32,33,34,33,32,0,0,0,0,0,0,0,0,0,0];
-        var anim_sit_punch = [0,0,0];
-        var anim_demo = [0,0,0,0,21,22,23,24,25,26,35,35,1,2,1,35,4,5,6,35,35,0,0,0,0
-                         ,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-                         ,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0];
+        var anim_idle = new animation(2, [35] , [0] , [0] );
+        var anim_headbutt = new animation( 2 ,[1,2,1] ,[0,0,0],[0,100,0]);
+        var anim_kick_high = new animation(3,[4,5,6],[0,0,0],[0,0,100]);
+        var anim_fall = new animation( 4, [7,8,9] ,[0,0,0] , [0,0,0] );
+        var anim_rise = new animation( 5, [10,11,12],[0,0,0],[0,0,0] );
+        var anim_cartwheel = new animation( 6, [21,22,23,24,25,26],[0,0,0,0,0,0],[0,0,0,0,0,0] );
+        var anim_jump = new animation( 7, [13,14,14,14,13],[0,0,0,0,0],[0,0,0,0,0] );
+        var anim_jumpkick = new animation( 8, [13,14,15,15,13],[0,0,0,0,0],[0,0,100,100,0]);
+        var anim_punch = new animation( 9, [19,20],[0,0],[0,100] );
+        var anim_kick = new animation( 10, [28,29,30,31],[0,0,0,0],[0,0,0,0] );
+        var anim_low_kick = new animation( 11, [0],[0],[0] );
+        var anim_sweep = new animation( 12, [16, 17, 18],[0,0,0],[0,0,0]);
+        var anim_block = new animation( 13, [0],[0],[0]);
+        var anim_splitkick = new animation( 14, [32,33,34,33,32],[0,0,0,0,0] ,[0,0,0,0,0]);
+        var anim_sit_punch = new animation( 15, [0] ,[0] ,[0] );
+        var anim_demo = new animation( 16, [0,0,0,0,21,22,23,24,25,26,35,35,1,2,1,35,4,5,6,35,35,0,0,0,0],
+                         [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+                         ,[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0] );
         var anim_sweep_back = anim_sweep;
         var anim_punch_back = anim_punch;
         var anim_kick_high_back = anim_kick_high;
-        var anim_knocked_out = [9,0,0];
+        var anim_knocked_out = new animation( 17, [9],[0],[0]) ;
+		var anim_startidle = new animation(18, [0] , [0] , [0] );
 
 	var KEYCODE_SHIFT = 16;
 	var KEYCODE_SPACE = 32;
@@ -91,6 +88,14 @@
 	var KEYCODE_H = 72;        
 	var KEYCODE_J = 74;        
 	var KEYCODE_Y = 89;        
+	
+	function animation( mid, frameData, minData, maxData )
+	{
+		this.frames = frameData;
+		this.min_ranges = minData;
+		this.max_ranges = maxData;
+		this.id = mid;
+	}
 	
 	function player( id, xpos, img)   // img , xpos, playerkeys 
         {
@@ -118,12 +123,12 @@
                     this.x += this.speed*this.direction;
                 }
                 
-                if(this.counter >= (this.anim.length / 3) )
+                if(this.counter >= (this.anim.frames.length ) )
                 {
                     this.setAnim(this.nextAnim);    
                 }
-                this.frameX = this.spriteWidth * parseInt(this.anim[this.counter] % 7);
-                this.frameY = this.spriteHeight * parseInt(this.anim[this.counter] / 7);
+                this.frameX = this.spriteWidth * parseInt(this.anim.frames[this.counter] % 7);
+                this.frameY = this.spriteHeight * parseInt(this.anim.frames[this.counter] / 7);
                 this.currentframe = this.counter;
             }
             this.setAnim = function( nanim ) {
@@ -132,7 +137,9 @@
                 {
                     this.anim = anim_knocked_out;
                     this.nextAnim = anim_knocked_out;
-                } else {
+                } else if (this.anim == anim_startidle && nanim == anim_idle){
+					this.anim = anim_startidle;
+				} else {
                     this.anim = nanim;
                     this.nextAnim = anim_idle;
                 }
@@ -460,8 +467,8 @@
                 {
                     gameState = 2;
                     for (i = 0; i< players.length; i++){
-                        players[i].anim = anim_idle;
-                        players[i].nextAnim = anim_idle;
+                        players[i].anim = anim_startidle;
+                        players[i].nextAnim = anim_startidle;
                         players[i].counter = 0;
                         players[i].step();
                         players[i].counter = 0;
@@ -479,15 +486,14 @@
                 
                 // Draw
                 for (i = 0; i< players.length; i++){
-                    if(players[i].anim == anim_idle && players[i].counter < 100)
+                    if((players[i].anim == anim_idle || players[i].anim == anim_startidle) && players[i].counter < 100)
                         players[i].nextAnim = input( i );
                     players[i].step();
 
                     c.drawImage(images[players[i].spriteSheet], players[i].frameX , players[i].frameY , players[i].spriteWidth, players[i].spriteHeight, players[i].x , players[i].y , players[i].spriteWidth, players[i].spriteHeight);
                 }
                 for (i = 0; i< players.length; i++){
-                    line = players[i].anim.length / 3;
-                    range = ((players[i].anim[players[i].currentframe + line + line])/100) * players[i].spriteWidth ; 
+                    range = ( players[i].anim.max_ranges[players[i].counter] / 100 ) * players[i].spriteWidth ; 
                     if(range > 0)
                     {
                         for (j = 0; j< players.length; j++)

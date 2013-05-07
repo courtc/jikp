@@ -99,7 +99,7 @@ var anim_startidle = new animation(18,[0],[0],[0]);
 
 var ACTION = {
 	walk : function(pid, dir) {
-		players[pid].direction = dir;
+		game.players[pid].direction = dir;
 	},
 };
 
@@ -142,6 +142,18 @@ function player(id, xpos, img)	// img , xpos, playerkeys
 		this.frameY = this.spriteHeight * parseInt(this.anim.frames[this.counter] / 7);
 		this.currentframe = this.counter;
 	}
+	this.render = function(ctx) {
+		ctx.drawImage(images[this.spriteSheet],
+				this.frameX, this.frameY, this.spriteWidth, this.spriteHeight,
+				this.x, this.y, this.spriteWidth, this.spriteHeight);
+	}
+	this.reset = function() {
+		this.anim = anim_startidle;
+		this.nextAnim = anim_startidle;
+		this.counter = 0;
+		this.step();
+		this.counter = 0;
+	}
 	this.setAnim = function(nanim) {
 		this.counter = 0;
 		if (this.health == 0) {
@@ -181,22 +193,10 @@ iBack.src = "gfx/ikback.png";
 iSplash = new Image();
 iSplash.src = "gfx/iksplash.png";
 
-// Global stuff (should go in a gamestate class)
 var joystick = [0, 0, 0, 0, 0, 0];
-var index = 0,
-	numFrames = 30,
-	gameState = GAMEMODE.SPLASH,
-	spriteFrame = 0,
-	frameCounter = 0,
-	frameTime = 0,
-	splashDelay = 5;
-var players = [ // id, x pos, imageref
-	new player(0, 0, 0),
-	new player(1, 60, 1),
-	new player(2, 120, 2),
-	new player(3, 180, 1),
-	new player(4, 240, 0)
-];
+
+var SPLASH_DELAY = 5;
+var game = new game();
 
 function reconfigure()
 {
@@ -214,8 +214,8 @@ function reconfigure()
 	canvas.style.left = (window.innerWidth - canvas.width) / 2 + "px";
 	canvas.style.top = (window.innerHeight - canvas.height) / 2 + "px";
 
-	for (var i = 0; i < players.length; i++) {
-		players[i].updatePlayer();
+	for (var i = 0; i < game.players.length; i++) {
+		game.players[i].updatePlayer();
 	}
 	c = canvas.getContext('2d');
 
@@ -232,8 +232,8 @@ window.onload = function() {
 	reconfigure();
 
 	//we're ready for the loop
-	for (var i = 0; i < players.length; i++) {
-		players[i].initPlayer();
+	for (var i = 0; i < game.players.length; i++) {
+		game.players[i].initPlayer();
 	}
 
 	//add touch listener
@@ -355,133 +355,152 @@ function input(iplayer)
 	return anim_idle;
 }
 
-function drawHealth(ctx, health, x, y, color)
-{
-	for (var i = 0; i < 6; i++) {
-		ctx.fillStyle = (i >= (6 - health)) ? color : "#777";
-		off = x + 8 * i;
-		ctx.fillRect(off + 0, y + 1, 7, 4);
-		ctx.fillRect(off + 1, y + 0, 5, 1);
-		ctx.fillRect(off + 1, y + 5, 5, 1);
-	}
-}
-
-function drawStatus(c)
-{
-	c.clearRect(0, 0, canvas.width, 20);
-	c.font = "" + 6 + "pt C64 Pro Mono";
-	// "LV"
-	c.fillStyle = "#f0f";
-	c.fillText("LV", 224, 8 * 1);
-	// Mode
-	c.fillStyle = "#f0f";
-	c.fillText("DEMO", 256, 8 * 1);
-	// Timer
-	c.fillStyle = "#aaf";
-	c.fillText("21".leftpad(2), 304, 8 * 1);
-	// White Score
-	drawHealth(c, players[2].health, 0, 2, "#fff");
-	c.fillStyle = "#fff";
-	c.fillText(players[2].score.toString().leftpad(6), 0, 8 * 2);
-	// Red Score
-	drawHealth(c, players[1].health, 80, 2, "#faa");
-	c.fillStyle = "#faa";
-	c.fillText(players[1].score.toString().leftpad(6), 80, 8 * 2);
-	// Blue Score
-	drawHealth(c, players[0].health, 160, 2, "#aaf");
-	c.fillStyle = "#aaf";
-	c.fillText(players[0].score.toString().leftpad(6), 160, 8 * 2);
-	// Level
-	c.fillStyle = "#f0f";
-	c.fillText("1".leftpad(2, "0"), 224, 8 * 2);
-	// Color
-	c.fillStyle = "#fff";
-	c.fillText("WHITE".leftpad(5), 256, 8 * 2);
-}
-
 function loop()
 {
-	frameTime++;
-	frameCounter++;
-	if (frameTime > splashDelay && gameState == GAMEMODE.SPLASH)
-		gameState = GAMEMODE.DEMO;
+	game.step();
+}
 
-	switch (gameState) {
-	case GAMEMODE.SPLASH:
-		//DRAW SPLASH
-		c.drawImage(iSplash, 0, 0, iSplash.width, iSplash.height, 0, 0, iSplash.width,
-			    iSplash.height);
-		break;
-	case GAMEMODE.DEMO:
-		//LOGIC
+function game()
+{
+	this.init = function() {
+		this.frameCounter = 0;
+		this.frameTime = 0;
+		this.gameState = GAMEMODE.SPLASH;
+		this.players = new Array(
+			new player(0, 0, 0),
+			new player(1, 60, 1),
+			new player(2, 120, 2),
+			new player(3, 180, 1),
+			new player(4, 240, 0)
+		);
+	}
 
-		//DRAW
-		//c.clearRect(0, 0, canvas.width, canvas.height);
-		c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
+	this.step = function() {
+		this.frameTime++;
+		this.frameCounter++;
 
-		for (var i = 0; i < players.length; i++) {
-			players[i].step();
+		this.render();
 
-			c.drawImage(images[players[i].spriteSheet], players[i].frameX,
-				    players[i].frameY, players[i].spriteWidth,
-				    players[i].spriteHeight, players[i].x, players[i].y,
-				    players[i].spriteWidth, players[i].spriteHeight);
-			players[i].nextAnim = anim_demo;
-		}
-		if (joystick[0] != 0) {
-			gameState = GAMEMODE.GAME;
-			for (var i = 0; i < players.length; i++) {
-				players[i].anim = anim_startidle;
-				players[i].nextAnim = anim_startidle;
-				players[i].counter = 0;
-				players[i].step();
-				players[i].counter = 0;
+		switch (this.gameState) {
+		case GAMEMODE.SPLASH:
+			if (this.frameTime > SPLASH_DELAY)
+				this.gameState = GAMEMODE.DEMO;
+			break;
+		case GAMEMODE.DEMO:
+			for (var i = 0; i < this.players.length; i++) {
+				this.players[i].step();
+				this.players[i].nextAnim = anim_demo;
 			}
-			c.clearRect(0, 0, canvas.width, canvas.height);
-		}
+			if (joystick[0] != 0) {
+				this.gameState = GAMEMODE.GAME;
+				for (var i = 0; i < this.players.length; i++) {
+					this.players[i].reset();
+				}
+			}
+			break;
+		case GAMEMODE.GAME:
+			for (var i = 0; i < this.players.length; i++) {
+				if ((this.players[i].anim == anim_idle || this.players[i].anim == anim_startidle)
+				    && this.players[i].counter < 100)
+					this.players[i].nextAnim = input(i);
+				this.players[i].step();
 
-		drawStatus(c);
-
-		break;
-
-	case GAMEMODE.GAME:
-		c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
-		// Logic it
-
-		// Draw
-		for (var i = 0; i < players.length; i++) {
-			if ((players[i].anim == anim_idle || players[i].anim == anim_startidle)
-			    && players[i].counter < 100)
-				players[i].nextAnim = input(i);
-			players[i].step();
-
-			c.drawImage(images[players[i].spriteSheet], players[i].frameX,
-				    players[i].frameY, players[i].spriteWidth,
-				    players[i].spriteHeight, players[i].x, players[i].y,
-				    players[i].spriteWidth, players[i].spriteHeight);
-		}
-		for (var i = 0; i < players.length; i++) {
-			range =
-			    (players[i].anim.max_ranges[players[i].counter] / 100) *
-			    players[i].spriteWidth;
-			if (range > 0) {
-				for (var j = 0; j < players.length; j++) {
-					dist = Math.abs(players[i].x - players[j].x);
-					if (dist > 0 && dist <= range && i != j
-					    && players[j].anim != anim_fall
-					    && players[j].anim != anim_knocked_out) {
-						players[j].nextAnim = anim_fall;
-						players[j].health = Math.max(players[j].health - 1, 0);
-						players[j].counter = 100;
-						players[i].score += 200;
+			}
+			for (var i = 0; i < this.players.length; i++) {
+				range =
+				    (this.players[i].anim.max_ranges[this.players[i].counter] / 100) *
+				    this.players[i].spriteWidth;
+				if (range > 0) {
+					for (var j = 0; j < this.players.length; j++) {
+						dist = Math.abs(this.players[i].x - this.players[j].x);
+						if (dist > 0 && dist <= range && i != j
+						    && this.players[j].anim != anim_fall
+						    && this.players[j].anim != anim_knocked_out) {
+							this.players[j].nextAnim = anim_fall;
+							this.players[j].health = Math.max(this.players[j].health - 1, 0);
+							this.players[j].counter = 100;
+							this.players[i].score += 200;
+						}
 					}
 				}
 			}
+			break;
 		}
-		drawStatus(c);
-		break;
 
-	default:
-		break;
 	}
+
+	this.render = function() {
+		switch (this.gameState) {
+		case GAMEMODE.SPLASH:
+			c.drawImage(iSplash, 0, 0, iSplash.width, iSplash.height, 0, 0, iSplash.width,
+				    iSplash.height);
+			break;
+		case GAMEMODE.DEMO:
+			c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
+
+			for (var i = 0; i < this.players.length; i++) {
+				this.players[i].render(c);
+			}
+			if (joystick[0] != 0)
+				c.clearRect(0, 0, canvas.width, canvas.height);
+
+			this.drawStatus(c);
+			break;
+
+		case GAMEMODE.GAME:
+			c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
+			for (var i = 0; i < this.players.length; i++) {
+				this.players[i].render(c);
+			}
+			this.drawStatus(c);
+			break;
+
+		default:
+			break;
+		}
+	}
+
+	this.drawHealth = function(ctx, health, x, y, color) {
+		for (var i = 0; i < 6; i++) {
+			ctx.fillStyle = (i >= (6 - health)) ? color : "#777";
+			off = x + 8 * i;
+			ctx.fillRect(off + 0, y + 1, 7, 4);
+			ctx.fillRect(off + 1, y + 0, 5, 1);
+			ctx.fillRect(off + 1, y + 5, 5, 1);
+		}
+	}
+
+	this.drawStatus = function(c) {
+		c.clearRect(0, 0, canvas.width, 20);
+		c.font = "" + 6 + "pt C64 Pro Mono";
+		// "LV"
+		c.fillStyle = "#f0f";
+		c.fillText("LV", 224, 8 * 1);
+		// Mode
+		c.fillStyle = "#f0f";
+		c.fillText("DEMO", 256, 8 * 1);
+		// Timer
+		c.fillStyle = "#aaf";
+		c.fillText("21".leftpad(2), 304, 8 * 1);
+		// White Score
+		this.drawHealth(c, this.players[2].health, 0, 2, "#fff");
+		c.fillStyle = "#fff";
+		c.fillText(this.players[2].score.toString().leftpad(6), 0, 8 * 2);
+		// Red Score
+		this.drawHealth(c, this.players[1].health, 80, 2, "#faa");
+		c.fillStyle = "#faa";
+		c.fillText(this.players[1].score.toString().leftpad(6), 80, 8 * 2);
+		// Blue Score
+		this.drawHealth(c, this.players[0].health, 160, 2, "#aaf");
+		c.fillStyle = "#aaf";
+		c.fillText(this.players[0].score.toString().leftpad(6), 160, 8 * 2);
+		// Level
+		c.fillStyle = "#f0f";
+		c.fillText("1".leftpad(2, "0"), 224, 8 * 2);
+		// Color
+		c.fillStyle = "#fff";
+		c.fillText("WHITE".leftpad(5), 256, 8 * 2);
+	}
+
+	this.init();
 }

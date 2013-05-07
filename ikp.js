@@ -98,7 +98,7 @@ var anim_knocked_out = new animation(17,[9],[0],[0]);
 var anim_startidle = new animation(18,[0],[0],[0]);
 
 var ACTION = {
-	walk : function(pid, dir) {
+	walk : function(game, pid, dir) {
 		game.players[pid].direction = dir;
 	},
 };
@@ -111,24 +111,8 @@ function animation(mid, frameData, minData, maxData)
 	this.id = mid;
 }
 
-function player(id, xpos, img)	// img , xpos, playerkeys 
+function Player(id, xpos, img)	// img , xpos, playerkeys 
 {
-	this.x = xpos;
-	this.y = 100;
-	this.id = id;
-	this.currentframe = 0;
-	this.counter = 0;
-	this.anim = anim_demo;
-	this.health = 6;
-	this.spriteSheet = img;
-	this.direction = 1;
-	this.score = 0;
-	this.speed = 1;
-	this.frameX = 0;
-	this.frameY = 0;
-	this.spriteWidth = 0;
-	this.spriteHeight = 0;
-	this.nextAnim = anim_demo;
 	this.step = function() {
 		this.counter++;
 		if (this.anim == anim_walk) {
@@ -143,7 +127,7 @@ function player(id, xpos, img)	// img , xpos, playerkeys
 		this.currentframe = this.counter;
 	}
 	this.render = function(ctx) {
-		ctx.drawImage(images[this.spriteSheet],
+		ctx.drawImage(this.spriteSheet,
 				this.frameX, this.frameY, this.spriteWidth, this.spriteHeight,
 				this.x, this.y, this.spriteWidth, this.spriteHeight);
 	}
@@ -166,82 +150,97 @@ function player(id, xpos, img)	// img , xpos, playerkeys
 			this.nextAnim = anim_idle;
 		}
 	}
-	this.initPlayer = function() {
-		this.spriteWidth = parseInt(images[this.spriteSheet].width / 7);
-		this.spriteHeight = parseInt(images[this.spriteSheet].height / 6);
-	}
-	this.updatePlayer = function() {
+	this.init = function() {
 		this.x = xpos;
 		this.y = 100;
+		this.id = id;
+		this.currentframe = 0;
+		this.counter = 0;
+		this.anim = anim_demo;
+		this.health = 6;
+		this.spriteSheet = img;
+		this.direction = 1;
+		this.score = 0;
+		this.speed = 1;
+		this.frameX = 0;
+		this.frameY = 0;
+		this.nextAnim = anim_demo;
+		this.spriteWidth = parseInt(this.spriteSheet.width / 7);
+		this.spriteHeight = parseInt(this.spriteSheet.height / 6);
 	}
+
+	this.init();
 }
-
-// Drawing stuff
-var canvas = document.createElement('canvas');
-var c = canvas.getContext('2d');
-var images = { };
-
-images[0] = new Image();
-images[0].src = "gfx/ikplayer_blue.png";
-images[1] = new Image();
-images[1].src = "gfx/ikplayer_red.png";
-images[2] = new Image();
-images[2].src = "gfx/ikplayer_white.png";
-
-iBack = new Image();
-iBack.src = "gfx/ikback.png";
-iSplash = new Image();
-iSplash.src = "gfx/iksplash.png";
 
 var joystick = [0, 0, 0, 0, 0, 0];
-
 var SPLASH_DELAY = 5;
-var game = new game();
 
-function reconfigure()
+function GRE()
 {
-	var scale = 1;
-
-	if (window.innerWidth / 320 < window.innerHeight / 200) {
-		scale = window.innerWidth / 320;
-	} else {
-		scale = window.innerHeight / 200;
+	this.loadImage = function(name) {
+		var image = new Image();
+		image.src = name;
+		return image;
 	}
 
-	canvas.width = 320 * scale;
-	canvas.height = 200 * scale;
-	canvas.style.position = "fixed";
-	canvas.style.left = (window.innerWidth - canvas.width) / 2 + "px";
-	canvas.style.top = (window.innerHeight - canvas.height) / 2 + "px";
+	this.reconfigure = function() {
+		var scale = 1;
 
-	for (var i = 0; i < game.players.length; i++) {
-		game.players[i].updatePlayer();
+		if (window.innerWidth / 320 < window.innerHeight / 200) {
+			scale = window.innerWidth / 320;
+		} else {
+			scale = window.innerHeight / 200;
+		}
+
+		this.canvas.width = 320 * scale;
+		this.canvas.height = 200 * scale;
+		this.canvas.style.position = "fixed";
+		this.canvas.style.left = (window.innerWidth - this.canvas.width) / 2 + "px";
+		this.canvas.style.top = (window.innerHeight - this.canvas.height) / 2 + "px";
+
+		if (typeof this.context.imageSmoothingEnabled !== 'undefined')
+			this.context.imageSmoothingEnabled = false;
+		else if (typeof this.context.webkitImageSmoothingEnabled !== 'undefined')
+			this.context.webkitImageSmoothingEnabled = false;
+		this.context.scale(scale, scale);
 	}
-	c = canvas.getContext('2d');
 
-	if (typeof c.imageSmoothingEnabled !== 'undefined')
-		c.imageSmoothingEnabled = false;
-	else if (typeof c.webkitImageSmoothingEnabled !== 'undefined')
-		c.webkitImageSmoothingEnabled = false;
-	c.scale(scale, scale);
+	this.clear = function() {
+		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+	}
+
+	this.blitImage = function(img) {
+		this.context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+	}
+
+	this.init = function() {
+		this.canvas = document.createElement('canvas');
+		this.context = this.canvas.getContext('2d');
+		this.imageCount = 0;
+		this.IMAGE = {
+			BLUE   : this.loadImage("gfx/ikplayer_blue.png"),
+			RED    : this.loadImage("gfx/ikplayer_red.png"),
+			WHITE  : this.loadImage("gfx/ikplayer_white.png"),
+			BG     : this.loadImage("gfx/ikback.png"),
+			SPLASH : this.loadImage("gfx/iksplash.png"),
+		};
+	}
+
+	this.init();
 }
 
-window.onresize = reconfigure;
 window.onload = function() {
-	document.body.appendChild(canvas);
-	reconfigure();
-
-	//we're ready for the loop
-	for (var i = 0; i < game.players.length; i++) {
-		game.players[i].initPlayer();
-	}
+	gre = new GRE();
+	window.onresize = function() { gre.reconfigure(); }
+	document.body.appendChild(gre.canvas);
+	var game = new Game(gre);
 
 	//add touch listener
 	var touchable = 'createTouch' in document;
 	if (touchable) {
-		canvas.addEventListener('touchstart', onTouchStart, false);
-		canvas.addEventListener('touchmove', onTouchMove, false);
-		canvas.addEventListener('touchend', onTouchEnd, false);
+		gre.canvas.addEventListener('touchstart', onTouchStart, false);
+		gre.canvas.addEventListener('touchmove', onTouchMove, false);
+		gre.canvas.addEventListener('touchend', onTouchEnd, false);
 	}
 
 	//add keyboard listener
@@ -249,7 +248,7 @@ window.onload = function() {
 	document.addEventListener('keypress', onKeyPress, false);
 	document.addEventListener('keyup', onKeyUp, false);
 
-	setInterval(loop, 1000 / 10);
+	setInterval(function() { game.step() }, 1000 / 10);
 }
 
 var keyConversion = [
@@ -341,38 +340,34 @@ var inputActions = [
 	{ mask: INPUT.DLA, anim: anim_kick_high_back,  },
 ];
 
-function input(iplayer)
+function input(game, iplayer)
 {
 	for (var i = 0; i < inputActions.length; ++i) {
 		if (inputActions[i].mask != joystick[iplayer])
 			continue;
 
 		if (typeof inputActions[i].action === 'function')
-			inputActions[i].action(iplayer, inputActions[i].aparam);
+			inputActions[i].action(game, iplayer, inputActions[i].aparam);
 
 		return inputActions[i].anim;
 	}
 	return anim_idle;
 }
 
-function loop()
-{
-	game.step();
-}
-
-function game()
+function Game(gre)
 {
 	this.init = function() {
 		this.frameCounter = 0;
 		this.frameTime = 0;
 		this.gameState = GAMEMODE.SPLASH;
 		this.players = new Array(
-			new player(0, 0, 0),
-			new player(1, 60, 1),
-			new player(2, 120, 2),
-			new player(3, 180, 1),
-			new player(4, 240, 0)
+			new Player(0,   0, gre.IMAGE.BLUE),
+			new Player(1,  60, gre.IMAGE.RED),
+			new Player(2, 120, gre.IMAGE.WHITE),
+			new Player(3, 180, gre.IMAGE.RED),
+			new Player(4, 240, gre.IMAGE.BLUE)
 		);
+		gre.reconfigure();
 	}
 
 	this.step = function() {
@@ -402,7 +397,7 @@ function game()
 			for (var i = 0; i < this.players.length; i++) {
 				if ((this.players[i].anim == anim_idle || this.players[i].anim == anim_startidle)
 				    && this.players[i].counter < 100)
-					this.players[i].nextAnim = input(i);
+					this.players[i].nextAnim = input(this, i);
 				this.players[i].step();
 
 			}
@@ -432,27 +427,26 @@ function game()
 	this.render = function() {
 		switch (this.gameState) {
 		case GAMEMODE.SPLASH:
-			c.drawImage(iSplash, 0, 0, iSplash.width, iSplash.height, 0, 0, iSplash.width,
-				    iSplash.height);
+			gre.blitImage(gre.IMAGE.SPLASH);
 			break;
 		case GAMEMODE.DEMO:
-			c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
-
-			for (var i = 0; i < this.players.length; i++) {
-				this.players[i].render(c);
+			if (joystick[0] != 0) {
+				gre.clear();
+				break;
 			}
-			if (joystick[0] != 0)
-				c.clearRect(0, 0, canvas.width, canvas.height);
-
-			this.drawStatus(c);
+			gre.blitImage(gre.IMAGE.BG);
+			for (var i = 0; i < this.players.length; i++) {
+				this.players[i].render(gre.context);
+			}
+			this.drawStatus(gre.context);
 			break;
 
 		case GAMEMODE.GAME:
-			c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
+			gre.blitImage(gre.IMAGE.BG);
 			for (var i = 0; i < this.players.length; i++) {
-				this.players[i].render(c);
+				this.players[i].render(gre.context);
 			}
-			this.drawStatus(c);
+			this.drawStatus(gre.context);
 			break;
 
 		default:
@@ -471,7 +465,7 @@ function game()
 	}
 
 	this.drawStatus = function(c) {
-		c.clearRect(0, 0, canvas.width, 20);
+		c.clearRect(0, 0, gre.canvas.width, 20);
 		c.font = "" + 6 + "pt C64 Pro Mono";
 		// "LV"
 		c.fillStyle = "#f0f";

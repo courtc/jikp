@@ -19,40 +19,54 @@ var GAMEMODE = {
 	DEMO   : 1,
 	GAME   : 2,
 };
-var GAMEMODE_SPLASH
-var KEYCODE_SHIFT = 16;
-var KEYCODE_SPACE = 32;
-var KEYCODE_CTRL  = 17;
-var KEYCODE_UP    = 38;
-var KEYCODE_DOWN  = 40;
-var KEYCODE_LEFT  = 37;
-var KEYCODE_RIGHT = 39;
-var KEYCODE_W     = 87;
-var KEYCODE_A     = 65;
-var KEYCODE_S     = 83;
-var KEYCODE_D     = 68;
-var KEYCODE_G     = 71;
-var KEYCODE_H     = 72;
-var KEYCODE_J     = 74;
-var KEYCODE_Y     = 89;
 
-var LEFT    = 0x00001;
-var UP      = 0x00010;
-var RIGHT   = 0x00100;
-var DOWN    = 0x01000;
-var BUTTONA = 0x10000;
-var UPRIGHT = (UP | RIGHT);
-var UPLEFT  = (UP | LEFT);
-var DOWNRIGHT  = (DOWN  | RIGHT);
-var DOWNLEFT   = (DOWN  | LEFT);
-var LEFTA      = (LEFT  | BUTTONA);
-var RIGHTA     = (RIGHT | BUTTONA);
-var UPA        = (UP    | BUTTONA);
-var DOWNA      = (DOWN  | BUTTONA);
-var UPRIGHTA   = (UP    | RIGHT | BUTTONA);
-var UPLEFTA    = (UP    | LEFT  | BUTTONA);
-var DOWNRIGHTA = (DOWN  | RIGHT | BUTTONA);
-var DOWNLEFTA  = (DOWN  | LEFT  | BUTTONA);
+var KEYCODE = {
+	SHIFT : 16,
+	CTRL  : 17,
+	SPACE : 32,
+	LEFT  : 37,
+	UP    : 38,
+	RIGHT : 39,
+	DOWN  : 40,
+	A     : 65,
+	D     : 68,
+	G     : 71,
+	H     : 72,
+	J     : 74,
+	S     : 83,
+	W     : 87,
+	Y     : 89,
+};
+
+var INPUTMASK = {
+	L   : 0x00001,
+	U   : 0x00010,
+	R   : 0x00100,
+	D   : 0x01000,
+	A   : 0x10000,
+};
+
+var INPUT = {
+	NA  : 0,
+	L   : INPUTMASK.L,
+	U   : INPUTMASK.U,
+	R   : INPUTMASK.R,
+	D   : INPUTMASK.D,
+	A   : INPUTMASK.A,
+	UR  : INPUTMASK.U | INPUTMASK.R,
+	UL  : INPUTMASK.U | INPUTMASK.L,
+	DR  : INPUTMASK.D | INPUTMASK.R,
+	DL  : INPUTMASK.D | INPUTMASK.L,
+	LA  : INPUTMASK.L | INPUTMASK.A,
+	RA  : INPUTMASK.R | INPUTMASK.A,
+	UA  : INPUTMASK.U | INPUTMASK.A,
+	DA  : INPUTMASK.D | INPUTMASK.A,
+	URA : INPUTMASK.U | INPUTMASK.R | INPUTMASK.A,
+	ULA : INPUTMASK.U | INPUTMASK.L | INPUTMASK.A,
+	DRA : INPUTMASK.D | INPUTMASK.R | INPUTMASK.A,
+	DLA : INPUTMASK.D | INPUTMASK.L | INPUTMASK.A,
+};
+
 
 var anim_walk = new animation(1,[35, 36, 37, 38, 39, 40], //ANIMATION FRAMES
 			      [0, 0, 0, 0, 0, 0],  // MIN RANGE
@@ -82,6 +96,12 @@ var anim_punch_back = anim_punch;
 var anim_kick_high_back = anim_kick_high;
 var anim_knocked_out = new animation(17,[9],[0],[0]);
 var anim_startidle = new animation(18,[0],[0],[0]);
+
+var ACTION = {
+	walk : function(pid, dir) {
+		players[pid].direction = dir;
+	},
+};
 
 function animation(mid, frameData, minData, maxData)
 {
@@ -194,7 +214,7 @@ function reconfigure()
 	canvas.style.left = (window.innerWidth - canvas.width) / 2 + "px";
 	canvas.style.top = (window.innerHeight - canvas.height) / 2 + "px";
 
-	for (i = 0; i < players.length; i++) {
+	for (var i = 0; i < players.length; i++) {
 		players[i].updatePlayer();
 	}
 	c = canvas.getContext('2d');
@@ -212,7 +232,7 @@ window.onload = function() {
 	reconfigure();
 
 	//we're ready for the loop
-	for (i = 0; i < players.length; i++) {
+	for (var i = 0; i < players.length; i++) {
 		players[i].initPlayer();
 	}
 
@@ -232,57 +252,44 @@ window.onload = function() {
 	setInterval(loop, 1000 / 10);
 }
 
+var keyConversion = [
+	{ key: KEYCODE.LEFT,  mask: INPUTMASK.L, pid: 0 },
+	{ key: KEYCODE.UP,    mask: INPUTMASK.U, pid: 0 },
+	{ key: KEYCODE.RIGHT, mask: INPUTMASK.R, pid: 0 },
+	{ key: KEYCODE.DOWN,  mask: INPUTMASK.D, pid: 0 },
+	{ key: KEYCODE.SHIFT, mask: INPUTMASK.A, pid: 0 },
+
+	{ key: KEYCODE.A,     mask: INPUTMASK.L, pid: 1 },
+	{ key: KEYCODE.W,     mask: INPUTMASK.U, pid: 1 },
+	{ key: KEYCODE.D,     mask: INPUTMASK.R, pid: 1 },
+	{ key: KEYCODE.S,     mask: INPUTMASK.D, pid: 1 },
+	{ key: KEYCODE.CTRL,  mask: INPUTMASK.A, pid: 1 },
+
+	{ key: KEYCODE.G,     mask: INPUTMASK.L, pid: 2 },
+	{ key: KEYCODE.Y,     mask: INPUTMASK.U, pid: 2 },
+	{ key: KEYCODE.J,     mask: INPUTMASK.R, pid: 2 },
+	{ key: KEYCODE.H,     mask: INPUTMASK.D, pid: 2 },
+	{ key: KEYCODE.SPACE, mask: INPUTMASK.A, pid: 2 },
+];
+
+function keyUpdate(keyCode, bSet)
+{
+	for (var i = 0; i < keyConversion.length; ++i) {
+		if (keyConversion[i].key != keyCode)
+			continue;
+
+		if (bSet)
+			joystick[keyConversion[i].pid] |= keyConversion[i].mask;
+		else
+			joystick[keyConversion[i].pid] &= ~keyConversion[i].mask;
+		return;
+	}
+}
+
 function onKeyDown(event)
 {
-	//do stuff
 	event.preventDefault();
-	switch (event.keyCode) {
-	case KEYCODE_LEFT:
-		joystick[0] |= LEFT;
-		break;
-	case KEYCODE_UP:
-		joystick[0] |= UP;
-		break;
-	case KEYCODE_RIGHT:
-		joystick[0] |= RIGHT;
-		break;
-	case KEYCODE_DOWN:
-		joystick[0] |= DOWN;
-		break;
-	case KEYCODE_SHIFT:
-		joystick[0] |= BUTTONA;
-		break;
-	case KEYCODE_A:
-		joystick[1] |= LEFT;
-		break;
-	case KEYCODE_W:
-		joystick[1] |= UP;
-		break;
-	case KEYCODE_D:
-		joystick[1] |= RIGHT;
-		break;
-	case KEYCODE_S:
-		joystick[1] |= DOWN;
-		break;
-	case KEYCODE_CTRL:
-		joystick[1] |= BUTTONA;
-		break;
-	case KEYCODE_G:
-		joystick[2] |= LEFT;
-		break;
-	case KEYCODE_Y:
-		joystick[2] |= UP;
-		break;
-	case KEYCODE_J:
-		joystick[2] |= RIGHT;
-		break;
-	case KEYCODE_H:
-		joystick[2] |= DOWN;
-		break;
-	case KEYCODE_SPACE:
-		joystick[2] |= BUTTONA;
-		break;
-	}
+	keyUpdate(event.keyCode, true);
 }
 
 function onKeyPress(event)
@@ -294,55 +301,7 @@ function onKeyPress(event)
 function onKeyUp(event)
 {
 	event.preventDefault();
-	switch (event.keyCode) {
-	case KEYCODE_LEFT:
-		joystick[0] &= ~LEFT;
-		break;
-	case KEYCODE_UP:
-		joystick[0] &= ~UP;
-		break;
-	case KEYCODE_RIGHT:
-		joystick[0] &= ~RIGHT;
-		break;
-	case KEYCODE_DOWN:
-		joystick[0] &= ~DOWN;
-		break;
-	case KEYCODE_SHIFT:
-		joystick[0] &= ~BUTTONA;
-		break;
-	case KEYCODE_A:
-		joystick[1] &= ~LEFT;
-		break;
-	case KEYCODE_W:
-		joystick[1] &= ~UP;
-		break;
-	case KEYCODE_D:
-		joystick[1] &= ~RIGHT;
-		break;
-	case KEYCODE_S:
-		joystick[1] &= ~DOWN;
-		break;
-	case KEYCODE_CTRL:
-		joystick[1] &= ~BUTTONA;
-		break;
-	case KEYCODE_G:
-		joystick[2] &= ~LEFT;
-		break;
-	case KEYCODE_Y:
-		joystick[2] &= ~UP;
-		break;
-	case KEYCODE_J:
-		joystick[2] &= ~RIGHT;
-		break;
-	case KEYCODE_H:
-		joystick[2] &= ~DOWN;
-		break;
-	case KEYCODE_SPACE:
-		joystick[2] &= ~BUTTONA;
-		break;
-	}
-	//do stuff
-
+	keyUpdate(event.keyCode, false);
 }
 
 function onTouchStart(event)
@@ -361,55 +320,44 @@ function onTouchEnd(event)
 	//do stuff
 }
 
+var inputActions = [
+	{ mask: INPUT.NA,  anim: anim_idle,            },
+	{ mask: INPUT.L,   anim: anim_walk,           action: ACTION.walk, aparam: -1 },
+	{ mask: INPUT.U,   anim: anim_jump,            },
+	{ mask: INPUT.R,   anim: anim_walk,           action: ACTION.walk, aparam: 1 },
+	{ mask: INPUT.D,   anim: anim_sweep,           },
+	{ mask: INPUT.A,   anim: anim_idle,            },
+	{ mask: INPUT.UR,  anim: anim_punch,           },
+	{ mask: INPUT.UL,  anim: anim_punch_back,      },
+	{ mask: INPUT.DR,  anim: anim_low_kick,        },
+	{ mask: INPUT.DL,  anim: anim_sit_punch,       },
+	{ mask: INPUT.LA,  anim: anim_cartwheel,       },
+	{ mask: INPUT.RA,  anim: anim_kick,            },
+	{ mask: INPUT.UA,  anim: anim_jumpkick,        },
+	{ mask: INPUT.DA,  anim: anim_sweep_back,      },
+	{ mask: INPUT.URA, anim: anim_headbutt,        },
+	{ mask: INPUT.ULA, anim: anim_splitkick,       },
+	{ mask: INPUT.DRA, anim: anim_kick_high,       },
+	{ mask: INPUT.DLA, anim: anim_kick_high_back,  },
+];
+
 function input(iplayer)
 {
-	switch (joystick[iplayer]) {
-	case 0:
-		return anim_idle;
-	case LEFT:
-		players[iplayer].direction = -1;
-		return anim_walk;
-	case RIGHT:
-		players[iplayer].direction = 1;
-		return anim_walk;
-	case UP:
-		return anim_jump;
-	case DOWN:
-		return anim_sweep;
-	case UPRIGHT:
-		return anim_punch;
-	case UPLEFT:
-		return anim_punch_back;	//backward
-	case DOWNRIGHT:
-		return anim_low_kick;
-	case DOWNLEFT:
-		return anim_sit_punch;
-	case BUTTONA:
-		return anim_idle;
-	case LEFTA:
-		return anim_cartwheel;
-	case RIGHTA:
-		return anim_kick;
-	case UPA:
-		return anim_jumpkick;
-	case DOWNA:
-		return anim_sweep_back;	//backward
-	case UPRIGHTA:
-		return anim_headbutt;
-	case UPLEFTA:
-		return anim_splitkick;
-	case DOWNRIGHTA:
-		return anim_kick_high;
-	case DOWNLEFTA:
-		return anim_kick_high_back;	//backward
-	default:
-		return anim_idle;
+	for (var i = 0; i < inputActions.length; ++i) {
+		if (inputActions[i].mask != joystick[iplayer])
+			continue;
+
+		if (typeof inputActions[i].action === 'function')
+			inputActions[i].action(iplayer, inputActions[i].aparam);
+
+		return inputActions[i].anim;
 	}
+	return anim_idle;
 }
 
 function drawHealth(ctx, health, x, y, color)
 {
-	for (i = 0; i < 6; i++) {
+	for (var i = 0; i < 6; i++) {
 		ctx.fillStyle = (i >= (6 - health)) ? color : "#777";
 		off = x + 8 * i;
 		ctx.fillRect(off + 0, y + 1, 7, 4);
@@ -471,7 +419,7 @@ function loop()
 		//c.clearRect(0, 0, canvas.width, canvas.height);
 		c.drawImage(iBack, 0, 0, iBack.width, iBack.height, 0, 0, iBack.width, iBack.height);
 
-		for (i = 0; i < players.length; i++) {
+		for (var i = 0; i < players.length; i++) {
 			players[i].step();
 
 			c.drawImage(images[players[i].spriteSheet], players[i].frameX,
@@ -482,7 +430,7 @@ function loop()
 		}
 		if (joystick[0] != 0) {
 			gameState = GAMEMODE.GAME;
-			for (i = 0; i < players.length; i++) {
+			for (var i = 0; i < players.length; i++) {
 				players[i].anim = anim_startidle;
 				players[i].nextAnim = anim_startidle;
 				players[i].counter = 0;
@@ -501,7 +449,7 @@ function loop()
 		// Logic it
 
 		// Draw
-		for (i = 0; i < players.length; i++) {
+		for (var i = 0; i < players.length; i++) {
 			if ((players[i].anim == anim_idle || players[i].anim == anim_startidle)
 			    && players[i].counter < 100)
 				players[i].nextAnim = input(i);
@@ -512,12 +460,12 @@ function loop()
 				    players[i].spriteHeight, players[i].x, players[i].y,
 				    players[i].spriteWidth, players[i].spriteHeight);
 		}
-		for (i = 0; i < players.length; i++) {
+		for (var i = 0; i < players.length; i++) {
 			range =
 			    (players[i].anim.max_ranges[players[i].counter] / 100) *
 			    players[i].spriteWidth;
 			if (range > 0) {
-				for (j = 0; j < players.length; j++) {
+				for (var j = 0; j < players.length; j++) {
 					dist = Math.abs(players[i].x - players[j].x);
 					if (dist > 0 && dist <= range && i != j
 					    && players[j].anim != anim_fall

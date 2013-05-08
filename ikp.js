@@ -402,13 +402,25 @@ function Game(gre)
 
 			}
 			for (var i = 0; i < this.players.length; i++) {
-				range =
+				var range =
 				    (this.players[i].anim.max_ranges[this.players[i].counter] / 100) *
 				    this.players[i].spriteWidth;
 				if (range > 0) {
 					for (var j = 0; j < this.players.length; j++) {
-						dist = Math.abs(this.players[i].x - this.players[j].x);
-						if (dist > 0 && dist <= range && i != j
+						var dist = Math.abs(this.players[i].x - this.players[j].x);
+						var inHitRange = false;
+                        var pointA = this.players[i].x + (range * this.players[i].direction) ;
+                        var pointB = this.players[i].x;
+                        var pointC = this.players[i].x;
+                        if( pointA > pointC ){
+                            pointB = pointA;
+                            pointA = pointC;
+                        }
+                        if( pointA < this.players[j].x && pointB > this.players[j].x ){
+                            inHitRange = true;
+                        }
+                        
+                        if (dist > 0 && inHitRange && i != j
 						    && this.players[j].anim != anim_fall
 						    && this.players[j].anim != anim_knocked_out) {
 							this.players[j].nextAnim = anim_fall;

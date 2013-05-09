@@ -229,8 +229,8 @@ function GRE()
 	this.init();
 }
 
+var gre = new GRE();
 window.onload = function() {
-	gre = new GRE();
 	window.onresize = function() { gre.reconfigure(); }
 	document.body.appendChild(gre.canvas);
 	var game = new Game(gre);

@@ -72,15 +72,15 @@ var anim_walk = new animation(1,[35, 36, 37, 38, 39, 40], //ANIMATION FRAMES
 			      [0, 0, 0, 0, 0, 0],  // MIN RANGE
 			      [0, 0, 0, 0, 0, 0]); // MAX RANGE
 var anim_idle = new animation(2,[35],[0],[0]);
-var anim_headbutt = new animation(2,[1, 2, 1],[0, 0, 0],[0, 100, 0]);
-var anim_kick_high = new animation(3,[4, 5, 6],[0, 0, 0],[0, 0, 100]);
+var anim_headbutt = new animation(2,[1, 2, 1],[0, 0, 0],[0, 50, 0]);
+var anim_kick_high = new animation(3,[4, 5, 6],[0, 0, 0],[0, 0, 50]);
 var anim_fall = new animation(4,[7, 8, 9],[0, 0, 0],[0, 0, 0]);
 var anim_rise = new animation(5,[10, 11, 12],[0, 0, 0],[0, 0, 0]);
 var anim_cartwheel = new animation(6,[21, 22, 23, 24, 25, 26],[0, 0, 0, 0, 0, 0],
 				   [0, 0, 0, 0, 0, 0]);
 var anim_jump = new animation(7,[13, 14, 14, 14, 13],[0, 0, 0, 0, 0],[0, 0, 0, 0, 0]);
-var anim_jumpkick = new animation(8,[13, 14, 15, 15, 13],[0, 0, 0, 0, 0],[0, 0, 100, 100, 0]);
-var anim_punch = new animation(9,[19, 20],[0, 0],[0, 100]);
+var anim_jumpkick = new animation(8,[13, 14, 15, 15, 13],[0, 0, 0, 0, 0],[0, 0, 50, 50, 0]);
+var anim_punch = new animation(9,[19, 20],[0, 0],[0, 50]);
 var anim_kick = new animation(10,[28, 29, 30, 31],[0, 0, 0, 0],[0, 0, 0, 0]);
 var anim_low_kick = new animation(11,[0],[0],[0]);
 var anim_sweep = new animation(12,[16, 17, 18],[0, 0, 0],[0, 0, 0]);
@@ -346,6 +346,11 @@ function input(game, iplayer)
 		if (inputActions[i].mask != joystick[iplayer])
 			continue;
 
+		if (inputActions[i].mask & INPUT.R)
+			game.players[iplayer].direction = 1;
+		else if (inputActions[i].mask & INPUT.L)
+			game.players[iplayer].direction = -1;
+
 		if (typeof inputActions[i].action === 'function')
 			inputActions[i].action(game, iplayer, inputActions[i].aparam);
 
@@ -403,26 +408,26 @@ function Game(gre)
 			}
 			for (var i = 0; i < this.players.length; i++) {
 				var range =
-				    (this.players[i].anim.max_ranges[this.players[i].counter] / 100) *
-				    this.players[i].spriteWidth;
+					(this.players[i].anim.max_ranges[this.players[i].counter] / 100) *
+					this.players[i].spriteWidth;
 				if (range > 0) {
 					for (var j = 0; j < this.players.length; j++) {
 						var dist = Math.abs(this.players[i].x - this.players[j].x);
 						var inHitRange = false;
-                        var pointA = this.players[i].x + (range * this.players[i].direction) ;
-                        var pointB = this.players[i].x;
-                        var pointC = this.players[i].x;
-                        if( pointA > pointC ){
-                            pointB = pointA;
-                            pointA = pointC;
-                        }
-                        if( pointA < this.players[j].x && pointB > this.players[j].x ){
-                            inHitRange = true;
-                        }
-                        
-                        if (dist > 0 && inHitRange && i != j
-						    && this.players[j].anim != anim_fall
-						    && this.players[j].anim != anim_knocked_out) {
+						var pointA = this.players[i].x + (range * this.players[i].direction) ;
+						var pointB = this.players[i].x;
+						var pointC = this.players[i].x;
+						if( pointA > pointC ){
+							pointB = pointA;
+							pointA = pointC;
+						}
+						if( pointA < this.players[j].x && pointB > this.players[j].x ){
+							inHitRange = true;
+						}
+
+						if (dist > 0 && inHitRange && i != j
+								&& this.players[j].anim != anim_fall
+								&& this.players[j].anim != anim_knocked_out) {
 							this.players[j].nextAnim = anim_fall;
 							this.players[j].health = Math.max(this.players[j].health - 1, 0);
 							this.players[j].counter = 100;

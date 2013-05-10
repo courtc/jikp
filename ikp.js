@@ -175,12 +175,25 @@ function Player(id, xpos, img)	// img , xpos, playerkeys
 var joystick = [0, 0, 0, 0, 0, 0];
 var SPLASH_DELAY = 5;
 
-function GRE()
+function GRE( initComplete )
 {
+	var self = this;
+	var imageCount = 0;
+	var imageLoadedCount = 0;
+	var initCompleteCallback;
+
 	this.loadImage = function(name) {
 		var image = new Image();
 		image.src = name;
+		image.onload = this.imageLoaded;
+		image.onerror = this.imageLoaded;
 		return image;
+	}
+
+	this.imageLoaded = function() {
+		imageLoadedCount++;
+		if (imageLoadedCount == imageCount)
+			initCompleteCallback(self);
 	}
 
 	this.reconfigure = function() {
@@ -213,10 +226,11 @@ function GRE()
 		this.context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
 	}
 
-	this.init = function() {
+	this.init = function(initComplete) {
 		this.canvas = document.createElement('canvas');
 		this.context = this.canvas.getContext('2d');
-		this.imageCount = 0;
+		imageCount = 5;
+		initCompleteCallback = initComplete;
 		this.IMAGE = {
 			BLUE   : this.loadImage("gfx/ikplayer_blue.png"),
 			RED    : this.loadImage("gfx/ikplayer_red.png"),
@@ -226,11 +240,14 @@ function GRE()
 		};
 	}
 
-	this.init();
+	this.init(initComplete);
 }
 
-var gre = new GRE();
 window.onload = function() {
+	var gre = new GRE(startGame);
+}
+
+function startGame(gre) {
 	window.onresize = function() { gre.reconfigure(); }
 	document.body.appendChild(gre.canvas);
 	var game = new Game(gre);

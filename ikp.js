@@ -69,8 +69,8 @@ var INPUT = {
 
 
 var anim_walk = new animation(1,[35, 36, 37, 38, 39, 40], //ANIMATION FRAMES
-			      [0, 0, 0, 0, 0, 0],  // MIN RANGE
-			      [0, 0, 0, 0, 0, 0]); // MAX RANGE
+				  [0, 0, 0, 0, 0, 0],  // MIN RANGE
+				  [0, 0, 0, 0, 0, 0]); // MAX RANGE
 var anim_idle = new animation(2,[35],[0],[0]);
 var anim_headbutt = new animation(2,[1, 2, 1],[0, 0, 0],[0, 50, 0]);
 var anim_kick_high = new animation(3,[4, 5, 6],[0, 0, 0],[0, 0, 50]);
@@ -175,12 +175,137 @@ function Player(id, xpos, img)	// img , xpos, playerkeys
 var joystick = [0, 0, 0, 0, 0, 0];
 var SPLASH_DELAY = 5;
 
-function GRE( initComplete )
+function getShader(gl, id) {
+	var shaderScript = document.getElementById(id);
+	if (!shaderScript) {
+		return null;
+	}
+	var str = "";
+	var k = shaderScript.firstChild;
+	while (k) {
+		if (k.nodeType == 3) {
+			str += k.textContent;
+		}
+		k = k.nextSibling;
+	}
+
+	var shader;
+	if (shaderScript.type == "x-shader/x-fragment") {
+		shader = gl.createShader(gl.FRAGMENT_SHADER);
+	} else if (shaderScript.type == "x-shader/x-vertex") {
+		shader = gl.createShader(gl.VERTEX_SHADER);
+	} else {
+		return null;
+	}
+
+	gl.shaderSource(shader, str);
+	gl.compileShader(shader);
+
+	if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+		alert(gl.getShaderInfoLog(shader));
+		return null;
+	}
+
+	return shader;
+}
+
+var shaderProgram;
+
+function initShaders(gl) {
+	var fragmentShader = getShader(gl, "shader-fs");
+	var vertexShader = getShader(gl, "shader-vs");
+
+	shaderProgram = gl.createProgram();
+	gl.attachShader(shaderProgram, vertexShader);
+	gl.attachShader(shaderProgram, fragmentShader);
+	gl.linkProgram(shaderProgram);
+
+	if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+		alert("Could not initialise shaders");
+	}
+
+	gl.useProgram(shaderProgram);
+
+	shaderProgram.vertexPositionAttribute = gl.getAttribLocation(shaderProgram, "aVertexPosition");
+	gl.enableVertexAttribArray(shaderProgram.vertexPositionAttribute);
+
+	shaderProgram.pMatrixUniform = gl.getUniformLocation(shaderProgram, "uPMatrix");
+	shaderProgram.mvMatrixUniform = gl.getUniformLocation(shaderProgram, "uMVMatrix");
+	return shaderProgram;
+}
+
+var mvMatrix = mat4.create();
+var pMatrix = mat4.create();
+
+function setMatrixUniforms(gl) {
+	gl.uniformMatrix4fv(shaderProgram.pMatrixUniform, false, pMatrix);
+	gl.uniformMatrix4fv(shaderProgram.mvMatrixUniform, false, mvMatrix);
+}
+
+
+
+var triangleVertexPositionBuffer;
+var squareVertexPositionBuffer;
+
+function initBuffers(gl) {
+	triangleVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+	var vertices = [
+		 0.0,  1.0,  0.0,
+		-1.0, -1.0,  0.0,
+		 1.0, -1.0,  0.0
+	];
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	triangleVertexPositionBuffer.itemSize = 3;
+	triangleVertexPositionBuffer.numItems = 3;
+
+	squareVertexPositionBuffer = gl.createBuffer();
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
+	vertices = [
+		 1.0,  1.0,  0.0,
+		-1.0,  1.0,  0.0,
+		 1.0, -1.0,  0.0,
+		-1.0, -1.0,  0.0
+	];
+	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+	squareVertexPositionBuffer.itemSize = 3;
+	squareVertexPositionBuffer.numItems = 4;
+}
+
+
+function drawScene(gl) {
+	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
+	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+	mat4.perspective(45, gl.viewportWidth / gl.viewportHeight, 0.1, 100.0, pMatrix);
+
+	mat4.identity(mvMatrix);
+
+	mat4.translate(mvMatrix, [-1.5, 0.0, -7.0]);
+	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	setMatrixUniforms(gl);
+	gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
+
+
+	mat4.translate(mvMatrix, [3.0, 0.0, 0.0]);
+	gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
+	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
+	setMatrixUniforms(gl);
+	gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
+}
+
+function GRE( initComplete, useWebGL )
 {
 	var self = this;
 	var imageCount = 0;
 	var imageLoadedCount = 0;
 	var initCompleteCallback;
+	var _usingWebGL = useWebGL;
+
+	this.usingWebGL = function() {
+		return _usingWebGL;
+	}
 
 	this.loadImage = function(name) {
 		var image = new Image();
@@ -197,25 +322,31 @@ function GRE( initComplete )
 	}
 
 	this.reconfigure = function() {
-		var scale = 1;
 
-		if (window.innerWidth / 320 < window.innerHeight / 200) {
-			scale = window.innerWidth / 320;
+		if (!this.usingWebGL()) {
+			var scale = 1;
+
+			if (window.innerWidth / 320 < window.innerHeight / 200) {
+				scale = window.innerWidth / 320;
+			} else {
+				scale = window.innerHeight / 200;
+			}
+
+			this.canvas.width = 320 * scale;
+			this.canvas.height = 200 * scale;
+			this.canvas.style.position = "fixed";
+			this.canvas.style.left = (window.innerWidth - this.canvas.width) / 2 + "px";
+			this.canvas.style.top = (window.innerHeight - this.canvas.height) / 2 + "px";
+
+			if (typeof this.context.imageSmoothingEnabled !== 'undefined')
+				this.context.imageSmoothingEnabled = false;
+			else if (typeof this.context.webkitImageSmoothingEnabled !== 'undefined')
+				this.context.webkitImageSmoothingEnabled = false;
+			this.context.scale(scale, scale);
 		} else {
-			scale = window.innerHeight / 200;
+			this.canvas.width = window.innerWidth;
+			this.canvas.height = window.innerHeight;
 		}
-
-		this.canvas.width = 320 * scale;
-		this.canvas.height = 200 * scale;
-		this.canvas.style.position = "fixed";
-		this.canvas.style.left = (window.innerWidth - this.canvas.width) / 2 + "px";
-		this.canvas.style.top = (window.innerHeight - this.canvas.height) / 2 + "px";
-
-		if (typeof this.context.imageSmoothingEnabled !== 'undefined')
-			this.context.imageSmoothingEnabled = false;
-		else if (typeof this.context.webkitImageSmoothingEnabled !== 'undefined')
-			this.context.webkitImageSmoothingEnabled = false;
-		this.context.scale(scale, scale);
 	}
 
 	this.clear = function() {
@@ -228,7 +359,11 @@ function GRE( initComplete )
 
 	this.init = function(initComplete) {
 		this.canvas = document.createElement('canvas');
-		this.context = this.canvas.getContext('2d');
+		if(!this.usingWebGL())
+			this.context = this.canvas.getContext('2d');
+		else
+			this.initGL(window.innerWidth, window.innerHeight);
+
 		imageCount = 5;
 		initCompleteCallback = initComplete;
 		this.IMAGE = {
@@ -240,11 +375,20 @@ function GRE( initComplete )
 		};
 	}
 
+	this.initGL = function(width, height) {
+		this.gl = this.canvas.getContext('experimental-webgl');
+		this.gl.viewportWidth = width;
+		this.gl.viewportHeight = height;
+
+		initShaders(this.gl);
+		initBuffers(this.gl);
+	}
+
 	this.init(initComplete);
 }
 
 window.onload = function() {
-	var gre = new GRE(startGame);
+	var gre = new GRE(startGame, true);
 }
 
 function startGame(gre) {
@@ -418,7 +562,7 @@ function Game(gre)
 		case GAMEMODE.GAME:
 			for (var i = 0; i < this.players.length; i++) {
 				if ((this.players[i].anim == anim_idle || this.players[i].anim == anim_startidle)
-				    && this.players[i].counter < 100)
+					&& this.players[i].counter < 100)
 					this.players[i].nextAnim = input(this, i);
 				this.players[i].step();
 
@@ -459,6 +603,8 @@ function Game(gre)
 	}
 
 	this.render = function() {
+		drawScene(gre.gl);
+		/*
 		switch (this.gameState) {
 		case GAMEMODE.SPLASH:
 			gre.blitImage(gre.IMAGE.SPLASH);
@@ -485,7 +631,7 @@ function Game(gre)
 
 		default:
 			break;
-		}
+		}*/
 	}
 
 	this.drawHealth = function(ctx, health, x, y, color) {

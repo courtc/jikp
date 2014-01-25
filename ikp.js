@@ -244,36 +244,33 @@ function setMatrixUniforms(gl) {
 
 
 
-var triangleVertexPositionBuffer;
 var squareVertexPositionBuffer;
 
 function initBuffers(gl) {
-	triangleVertexPositionBuffer = gl.createBuffer();
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-	var vertices = [
-		 0.0,  1.0,  0.0,
-		-1.0, -1.0,  0.0,
-		 1.0, -1.0,  0.0
-	];
-	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-	triangleVertexPositionBuffer.itemSize = 3;
-	triangleVertexPositionBuffer.numItems = 3;
-
 	squareVertexPositionBuffer = gl.createBuffer();
 	gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
 	vertices = [
-		 1.0,  1.0,  0.0,
-		-1.0,  1.0,  0.0,
-		 1.0, -1.0,  0.0,
-		-1.0, -1.0,  0.0
+		 1.0,  1.0,  -5.0,
+		-1.0,  1.0,  -5.0,
+		 1.0, -1.0,  -5.0,
+		-1.0, -1.0,  -5.0
 	];
 	gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 	squareVertexPositionBuffer.itemSize = 3;
 	squareVertexPositionBuffer.numItems = 4;
+
+	var textureCoords = [
+		// Front face
+		0.0, 0.0,
+		1.0, 0.0,
+		1.0, 1.0,
+		0.0, 1.0,
+	];
 }
 
 
 function drawScene(gl) {
+	gl.clearColor(0,0,0,1);
 	gl.viewport(0, 0, gl.viewportWidth, gl.viewportHeight);
 	gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -281,114 +278,140 @@ function drawScene(gl) {
 
 	mat4.identity(mvMatrix);
 
-	mat4.translate(mvMatrix, [-1.5, 0.0, -7.0]);
-	gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, triangleVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
-	setMatrixUniforms(gl);
-	gl.drawArrays(gl.TRIANGLES, 0, triangleVertexPositionBuffer.numItems);
-
-
-	mat4.translate(mvMatrix, [3.0, 0.0, 0.0]);
 	gl.bindBuffer(gl.ARRAY_BUFFER, squareVertexPositionBuffer);
 	gl.vertexAttribPointer(shaderProgram.vertexPositionAttribute, squareVertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
 	setMatrixUniforms(gl);
 	gl.drawArrays(gl.TRIANGLE_STRIP, 0, squareVertexPositionBuffer.numItems);
 }
 
+
 function GRE( initComplete, useWebGL )
 {
-	var self = this;
-	var imageCount = 0;
-	var imageLoadedCount = 0;
-	var initCompleteCallback;
-	var _usingWebGL = useWebGL;
+	this.self = this;
+	this.imageCount = 0;
+	this.imageLoadedCount = 0;
+	//this.initCompleteCallback;
+	//var _usingWebGL = false;
+	this._usingWebGL = useWebGL;
 
-	this.usingWebGL = function() {
-		return _usingWebGL;
-	}
+//	this.init(initComplete);
+}
 
-	this.loadImage = function(name) {
-		var image = new Image();
-		image.src = name;
-		image.onload = this.imageLoaded;
-		image.onerror = this.imageLoaded;
-		return image;
-	}
+GRE.prototype.usingWebGL = function() {
+	return this._usingWebGL;
+}
 
-	this.imageLoaded = function() {
-		imageLoadedCount++;
-		if (imageLoadedCount == imageCount)
-			initCompleteCallback(self);
-	}
+GRE.prototype.loadImage = function(name) {
+	var image = new Image();
+	image.gre = this;
+	image.src = name;
+	//image.onload = this.imageLoaded;
+	image.addEventListener('load', this.imageLoaded);
+	//image.onerror = this.imageLoaded;
+	return image;
+}
 
-	this.reconfigure = function() {
+GRE.prototype.loadTexture = function(gl, image, texture) {
+	gl.bindTexture(gl.TEXTURE_2D, texture);
+	gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+	gl.bindTexture(gl.TEXTURE_2D, null);
+}
 
-		if (!this.usingWebGL()) {
-			var scale = 1;
-
-			if (window.innerWidth / 320 < window.innerHeight / 200) {
-				scale = window.innerWidth / 320;
-			} else {
-				scale = window.innerHeight / 200;
-			}
-
-			this.canvas.width = 320 * scale;
-			this.canvas.height = 200 * scale;
-			this.canvas.style.position = "fixed";
-			this.canvas.style.left = (window.innerWidth - this.canvas.width) / 2 + "px";
-			this.canvas.style.top = (window.innerHeight - this.canvas.height) / 2 + "px";
-
-			if (typeof this.context.imageSmoothingEnabled !== 'undefined')
-				this.context.imageSmoothingEnabled = false;
-			else if (typeof this.context.webkitImageSmoothingEnabled !== 'undefined')
-				this.context.webkitImageSmoothingEnabled = false;
-			this.context.scale(scale, scale);
-		} else {
-			this.canvas.width = window.innerWidth;
-			this.canvas.height = window.innerHeight;
+GRE.prototype.imageLoaded = function() {
+	this.gre.imageLoadedCount++;
+	if (this.gre.imageLoadedCount == this.gre.imageCount) {
+		if (this.gre._usingWebGL) {
+			this.gre.loadTexture(this.gre.gl, this.gre.IMAGE.BLUE, this.gre.spriteTexture);
 		}
+		this.gre.initCompleteCallback(this.gre);
 	}
+}
 
-	this.clear = function() {
-		this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+GRE.prototype.reconfigure = function() {
+
+	if (!this.usingWebGL()) {
+		var scale = 1;
+
+		if (window.innerWidth / 320 < window.innerHeight / 200) {
+			scale = window.innerWidth / 320;
+		} else {
+			scale = window.innerHeight / 200;
+		}
+
+		this.canvas.width = 320 * scale;
+		this.canvas.height = 200 * scale;
+		this.canvas.style.position = "fixed";
+		this.canvas.style.left = (window.innerWidth - this.canvas.width) / 2 + "px";
+		this.canvas.style.top = (window.innerHeight - this.canvas.height) / 2 + "px";
+
+		if (typeof this.context.imageSmoothingEnabled !== 'undefined')
+			this.context.imageSmoothingEnabled = false;
+		else if (typeof this.context.webkitImageSmoothingEnabled !== 'undefined')
+			this.context.webkitImageSmoothingEnabled = false;
+		this.context.scale(scale, scale);
+	} else {
+		this.canvas.width = window.innerWidth;
+		this.canvas.height = window.innerHeight;
 	}
+}
 
-	this.blitImage = function(img) {
-		this.context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
-	}
+GRE.prototype.clear = function() {
+	this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+}
 
-	this.init = function(initComplete) {
-		this.canvas = document.createElement('canvas');
-		if(!this.usingWebGL())
-			this.context = this.canvas.getContext('2d');
-		else
-			this.initGL(window.innerWidth, window.innerHeight);
+GRE.prototype.blitImage = function(img) {
+	this.context.drawImage(img, 0, 0, img.width, img.height, 0, 0, img.width, img.height);
+}
 
-		imageCount = 5;
-		initCompleteCallback = initComplete;
-		this.IMAGE = {
-			BLUE   : this.loadImage("gfx/ikplayer_blue.png"),
-			RED    : this.loadImage("gfx/ikplayer_red.png"),
-			WHITE  : this.loadImage("gfx/ikplayer_white.png"),
-			BG     : this.loadImage("gfx/ikback.png"),
-			SPLASH : this.loadImage("gfx/iksplash.png"),
-		};
-	}
+GRE.prototype.init = function(initComplete) {
+	this.canvas = document.createElement('canvas');
+	if(!this.usingWebGL())
+		this.context = this.canvas.getContext('2d');
+	else
+		this.initGL(window.innerWidth, window.innerHeight);
 
-	this.initGL = function(width, height) {
-		this.gl = this.canvas.getContext('experimental-webgl');
-		this.gl.viewportWidth = width;
-		this.gl.viewportHeight = height;
+	this.imageCount = 5;
+	this.initCompleteCallback = initComplete;
+	this.IMAGE = {
+		BLUE   : this.loadImage("gfx/ikplayer_blue.png"),
+		RED    : this.loadImage("gfx/ikplayer_red.png"),
+		WHITE  : this.loadImage("gfx/ikplayer_white.png"),
+		BG     : this.loadImage("gfx/ikback.png"),
+		SPLASH : this.loadImage("gfx/iksplash.png"),
+	};
+}
 
-		initShaders(this.gl);
-		initBuffers(this.gl);
-	}
+var create3DContext = function(canvas, opt_attribs) {
+  var names = ["webgl", "experimental-webgl", "webkit-3d", "moz-webgl"];
+  var context = null;
+  for (var ii = 0; ii < names.length; ++ii) {
+    try {
+      context = canvas.getContext(names[ii], opt_attribs);
+    } catch(e) {}
+    if (context) {
+      break;
+    }
+  }
+  return context;
+}
 
-	this.init(initComplete);
+GRE.prototype.initGL = function(width, height) {
+	this.gl = create3DContext(this.canvas);
+	this.gl.viewportWidth = width;
+	this.gl.viewportHeight = height;
+
+	this.spriteTexture = this.gl.createTexture();
+
+	initShaders(this.gl);
+	initBuffers(this.gl);
 }
 
 window.onload = function() {
 	var gre = new GRE(startGame, true);
+	gre.init(startGame);
 }
 
 function startGame(gre) {
